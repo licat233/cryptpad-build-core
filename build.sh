@@ -10,13 +10,9 @@ PROJECT_DIR="$SCRIPT_DIR/cryptpad"
 ONLYOFFICE_CONF_DIR="$PROJECT_DIR/onlyoffice-conf"
 OO_DIST="$PROJECT_DIR/www/common/onlyoffice/dist"
 DOWNLOADS_DIR="$SCRIPT_DIR/downloads"
-INSTALL_METHOD=unspecified  # 默认安装方法
-if [ $# -ge 1 ]; then
-    INSTALL_METHOD="$1"
-fi
 RUN_FUNC="main" # 默认执行主函数
-if [ $# -ge 2 ]; then
-    RUN_FUNC="$2"
+if [ $# -ge 1 ]; then
+    RUN_FUNC="$1"
 fi
 
 init(){
@@ -25,16 +21,16 @@ init(){
             main "$@"
             ;;
         "auto_config")
-            auto_config
+            auto_config "$@"
             ;;
         "install_cryptpad")
-            install_cryptpad
+            install_cryptpad "$@"
             ;;
         "install_onlyoffice")
-            install_onlyoffice
+            install_onlyoffice "$@"
             ;;
         "install_node_modules")
-            install_node_modules
+            install_node_modules "$@"
             ;;
         *)
             main "$@"
@@ -44,13 +40,13 @@ init(){
 
 main(){
     
-    install_cryptpad
+    install_cryptpad "$@"
 
-    auto_config
+    auto_config "$@"
 
-    install_onlyoffice
+    install_onlyoffice "$@"
 
-    install_node_modules
+    install_node_modules "$@"
 
     # 完成提示
     echo "=================== 全 部 安 装 完 成 ==================="
@@ -60,7 +56,7 @@ auto_config(){
     cd "$PROJECT_DIR"
     update_application_config
     echo ""
-    update_config_js
+    update_config_js "$@"
     echo ""
     update_customize_pages
     echo "" 
@@ -86,13 +82,13 @@ update_onlyoffice_inner(){
 update_common_ui_elements(){
     local UI_ELEMENTS_PATH="$PROJECT_DIR/www/common/common-ui-elements.js"
     local old_str="var todo = function () {"
-    local new_str="var todo = function (e) {crowdfundingState = true;return;"
+    local new_str="var todo = function (e) {\n\t\t\tcrowdfundingState = true;\n\t\t\treturn;"
     replace_text "$UI_ELEMENTS_PATH" "$old_str" "$new_str"
     local old_str="'class': 'cp-toolbar-about fa fa-info',"
-    local new_str="'hidden':true,'class': 'cp-toolbar-about fa fa-info'"
+    local new_str="'hidden':true,\n\t\t\t\t'class': 'cp-toolbar-about fa fa-info'"
     replace_text "$UI_ELEMENTS_PATH" "$old_str" "$new_str"
     local old_str="'href': 'https://docs.cryptpad.org',"
-    local new_str="'hidden':true,'href': '/',"
+    local new_str="'hidden':true,\n\t\t\t\t'href': '/',"
     replace_text "$UI_ELEMENTS_PATH" "$old_str" "$new_str"
     echo ""
     echo "*************** www/common/common-ui-elements.js 更改完成 ***************"
@@ -111,7 +107,7 @@ update_customize_pages_index(){
 update_customize_pages(){
     local PAGES_PATH="$PROJECT_DIR/customize.dist/pages.js"
     local old_str="Pages.infopageFooter = function () {"
-    local new_str="Pages.infopageFooter = function (e) { return null;"
+    local new_str="Pages.infopageFooter = function (e) {\n\t   return null;"
     replace_text "$PAGES_PATH" "$old_str" "$new_str"
     local old_str2="h('a.nav-item.nav-link', { href: 'https://docs.cryptpad.org'},"
     local new_str2="h('a.nav-item.nav-link', { href: 'https://docs.cryptpad.org', hidden: true},"
@@ -124,31 +120,49 @@ update_customize_pages(){
 update_application_config(){
     local APP_CONF_PATH="$PROJECT_DIR/www/common/application_config_internal.js"
     # 定义要替换的旧内容和新内容
-    local OLD_STR="return AppConfig;"
+    # 加盐
+    replace_text "$APP_CONF_PATH" "AppConfig.loginSalt = '';" "AppConfig.loginSalt = 'licat23333';"
 
-    local NEW_STR="AppConfig.availableLanguages = ['zh', 'en']; try { var LS_LANG = 'CRYPTPAD_LANG'; var defaultLang = 'zh'; if (!localStorage.getItem(LS_LANG)) { localStorage.setItem(LS_LANG, defaultLang); } } catch (error) { console.error('设置默认中文语言出错：', error); } AppConfig.loginSalt = 'licat2333'; AppConfig.registeredOnlyTypes = AppConfig.availablePadTypes; return AppConfig"
+    # 设置默认语言为中文,且禁止未注册用户使用
+    local old_str="return AppConfig;"
+    local a="AppConfig.availableLanguages = ['zh', 'en']"
+    local b="try {"
+    local c="    var LS_LANG = \"CRYPTPAD_LANG\";"
+    local d="    var defaultLang = 'zh';"
+    local e="    if (!localStorage.getItem(LS_LANG)) {"
+    local f="        localStorage.setItem(LS_LANG, defaultLang);"
+    local g="    }"
+    local h="} catch (error) {"
+    local i="    console.error(\"设置默认中文语言出错：\", error)"
+    local j="}"
+    local k="AppConfig.registeredOnlyTypes = AppConfig.availablePadTypes;"
+    local l="return AppConfig"
 
-    # 调用替换函数（文件路径替换为你的实际文件路径）
-    replace_text "$APP_CONF_PATH" "$OLD_STR" "$NEW_STR"
+    replace_text "$APP_CONF_PATH" "$old_str" "$a\n\t$b\n\t$c\n\t$d\n\t$e\n\t$f\n\t$g\n\t$h\n\t$i\n\t$j\n\t$k\n\t$l"
+
 
     mkdir -p "$PROJECT_DIR/customize"
-    cp -f "$PROJECT_DIR/www/common/application_config_internal.js" "$PROJECT_DIR/customize/application_config.js"
+    cp -f "$APP_CONF_PATH" "$PROJECT_DIR/customize/application_config.js"
 
     echo ""
     echo "*************** /www/common/application_config_internal.js 更改完成 ***************"
 }
 
 update_config_js(){
+    INSTALL_METHOD=unspecified  # 默认安装方法
+    if [ $# -ge 2 ]; then
+        INSTALL_METHOD="$2"
+    fi
     local CONFIG_PATH="$PROJECT_DIR/config/config.example.js"
     # 定义要替换的旧内容和新内容
     if [ "$INSTALL_METHOD" == "docker" ]; then
         replace_text "$CONFIG_PATH" "//httpAddress: 'localhost'" "httpAddress: '0.0.0.0'"
-        replace_text "$CONFIG_PATH" "installMethod: 'unspecified'," "removeDonateButton: true,installMethod: 'docker',"
+        replace_text "$CONFIG_PATH" "installMethod: 'unspecified'," "removeDonateButton: true,\n\tinstallMethod: 'docker',"
     else
-        replace_text "$CONFIG_PATH" "installMethod: 'unspecified'," "removeDonateButton: true,installMethod: 'unspecified'"
+        replace_text "$CONFIG_PATH" "installMethod: 'unspecified'," "removeDonateButton: true,\n\tinstallMethod: 'unspecified'"
     fi
 
-    cp -f "$PROJECT_DIR/config/config.example.js" "$PROJECT_DIR/config/config.js"
+    cp -f "$CONFIG_PATH" "$PROJECT_DIR/config/config.js"
 
     echo "*************** /config/config.example.js 更改完成 ***************"
 }
