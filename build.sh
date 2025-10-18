@@ -56,7 +56,7 @@ auto_config(){
     cd "$PROJECT_DIR"
     update_application_config
     echo ""
-    update_config_js "$@"
+    update_config_js
     echo ""
     update_customize_pages
     echo "" 
@@ -149,10 +149,7 @@ update_application_config(){
 }
 
 update_config_js(){
-    INSTALL_METHOD=unspecified  # 默认安装方法
-    if [ $# -ge 2 ]; then
-        INSTALL_METHOD="$2"
-    fi
+    INSTALL_METHOD=docker  # 可选值：docker 或 unspecified
     local CONFIG_PATH="$PROJECT_DIR/config/config.example.js"
     # 定义要替换的旧内容和新内容
     if [ "$INSTALL_METHOD" == "docker" ]; then
