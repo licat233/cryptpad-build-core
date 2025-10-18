@@ -5,17 +5,11 @@ set -euo pipefail
 # 脚本所在目录（项目根）
 SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>/dev/null && pwd)
 
-mkdir -p cryptpad
-
-cd cryptpad
-
-mkdir -p data/{blob,block,data,files} customize onlyoffice-dist onlyoffice-conf
-
 # 可配置变量（不要硬编码路径）
 PROJECT_DIR="$SCRIPT_DIR/cryptpad"
 ONLYOFFICE_CONF_DIR="$PROJECT_DIR/onlyoffice-conf"
 OO_DIST="$PROJECT_DIR/www/common/onlyoffice/dist"
-ONLYOFFICE_PREPARED_DIR="$SCRIPT_DIR/onlyoffice"
+DOWNLOADS_DIR="$SCRIPT_DIR/downloads"
 INSTALL_METHOD=unspecified  # 默认安装方法
 if [ $# -ge 1 ]; then
     INSTALL_METHOD="$1"
@@ -30,14 +24,14 @@ init(){
         "main")
             main "$@"
             ;;
-        "update_code")
-            update_code
+        "auto_config")
+            auto_config
             ;;
         "install_cryptpad")
-            install_cryptpad "$INSTALL_METHOD"
+            install_cryptpad
             ;;
-        "install_onlyoffice_editor")
-            install_onlyoffice_editor
+        "install_onlyoffice")
+            install_onlyoffice
             ;;
         "install_node_modules")
             install_node_modules
@@ -50,11 +44,11 @@ init(){
 
 main(){
     
-    install_cryptpad "$INSTALL_METHOD"
+    install_cryptpad
 
-    update_code
+    auto_config
 
-    install_onlyoffice_editor
+    install_onlyoffice
 
     install_node_modules
 
@@ -62,7 +56,7 @@ main(){
     echo "=================== 全 部 安 装 完 成 ==================="
 }
 
-update_code(){
+auto_config(){
     cd "$PROJECT_DIR"
     update_application_config
     echo ""
@@ -76,7 +70,7 @@ update_code(){
     echo "" 
     update_onlyoffice_inner
     echo "" 
-    echo "********** 代码已全部更改完成 **********"
+    echo "********** 代码已全部配置完成 **********"
 }
 
 
@@ -136,6 +130,10 @@ update_application_config(){
 
     # 调用替换函数（文件路径替换为你的实际文件路径）
     replace_text "$APP_CONF_PATH" "$OLD_STR" "$NEW_STR"
+
+    mkdir -p "$PROJECT_DIR/customize"
+    cp -f "$PROJECT_DIR/www/common/application_config_internal.js" "$PROJECT_DIR/customize/application_config.js"
+
     echo ""
     echo "*************** /www/common/application_config_internal.js 更改完成 ***************"
 }
@@ -149,37 +147,32 @@ update_config_js(){
     else
         replace_text "$CONFIG_PATH" "installMethod: 'unspecified'," "removeDonateButton: true,installMethod: 'unspecified'"
     fi
+
+    cp -f "$PROJECT_DIR/config/config.example.js" "$PROJECT_DIR/config/config.js"
+
     echo "*************** /config/config.example.js 更改完成 ***************"
 }
 
 # 安装 CryptPad
 install_cryptpad() {
     cd "$SCRIPT_DIR"
+    # 清空目录，谨慎，建议保留用户数据
+    # rm -rf "$SCRIPT_DIR/cryptpad/"
     # 解压并覆盖
-    unzip -o cryptpad.zip
+    unzip -o "$DOWNLOADS_DIR/cryptpad.zip"
+    # 重命名目录
+    # mv  "$SCRIPT_DIR/cryptpad-2025.6.0" "$SCRIPT_DIR/cryptpad"
     # 进入 CryptPad 目录
     cd cryptpad
+
     # 切换到指定的版本分支
     git checkout 2025.6.0
-
-    # 复制配置文件
-    cd "$PROJECT_DIR"
-    cp config/config.example.js config/config.js
-
-    mkdir -p customize
-    cp -r www/common/application_config_internal.js customize/application_config.js
-
-    # 条件安装
-    if [ "$1" == "docker" ]; then
-        replace_text "$PROJECT_DIR/config/config.js" "//httpAddress: 'localhost'" "httpAddress: '0.0.0.0'"
-        replace_text "$PROJECT_DIR/config/config.js" "installMethod: 'unspecified'" "installMethod: 'docker'"
-    fi 
-    
-    echo "*************** CryptPad 安装和配置完成 ***************"
+    mkdir -p data/{blob,block,data,files} customize onlyoffice-dist onlyoffice-conf
+    echo "*************** CryptPad 安装完成 ***************"
 }
 
 ## 安装 OnlyOffice 编辑器
-install_onlyoffice_editor() {
+install_onlyoffice() {
     cd "$PROJECT_DIR"
     #  创建目录和配置文件
     mkdir -p "$ONLYOFFICE_CONF_DIR"
@@ -187,11 +180,13 @@ install_onlyoffice_editor() {
 
     # 获取旧版本（v1, v2b, v4, v5, v6）——使用 onlyoffice-builds bare 仓库 + git worktree
     cd "$ONLYOFFICE_CONF_DIR"
-    unzip -o "$ONLYOFFICE_PREPARED_DIR/onlyoffice-builds.git.zip"
+    if [ -d "$ONLYOFFICE_CONF_DIR/onlyoffice-builds" ]; then
+        rm -rf "$ONLYOFFICE_CONF_DIR/onlyoffice-builds"
+    fi
+    unzip -o "$DOWNLOADS_DIR/onlyoffice-builds.zip"
 
     # 然后对每个旧版本用对应 commit 检出到目标目录（示例列出 v1、v2b、v4、v5、v6 的命令；替换 commit 即可）：
-
-    cd "$ONLYOFFICE_CONF_DIR/onlyoffice-builds.git"
+    cd "$ONLYOFFICE_CONF_DIR/onlyoffice-builds"
 
     # v1 (commit 4f370beb)
     # 如果目标目录已存在，则先删除以避免冲突
@@ -260,10 +255,7 @@ install_onlyoffice_editor() {
     fi
     mkdir -p "$OO_DIST/v7"
     cd "$OO_DIST/v7"
-    # 复制预先准备好的 onlyoffice-editor-v7.zip 到当前目录（预备文件位于脚本同级目录的 sibling onlyoffice 文件夹）
-    cp "$ONLYOFFICE_PREPARED_DIR/onlyoffice-editor-v7.zip" .
-    unzip -o onlyoffice-editor-v7.zip
-    rm onlyoffice-editor-v7.zip*
+    unzip -o "$DOWNLOADS_DIR/onlyoffice-editor-v7.zip"
     echo "v7.3.3.60+11" > ./.version
     # v7 移除每个版本中不需要的 help/dictionaries
     rm -rf "$OO_DIST/v7/web-apps/apps/documenteditor/main/resources/help"
@@ -280,11 +272,8 @@ install_onlyoffice_editor() {
     fi
     mkdir -p "$OO_DIST/v8"
     cd "$OO_DIST/v8"
-    # 复制预先准备好的 onlyoffice-editor-v8.zip 到当前目录
-    cp "$ONLYOFFICE_PREPARED_DIR/onlyoffice-editor-v8.zip" .
-    unzip -o onlyoffice-editor-v8.zip
-    rm onlyoffice-editor-v8.zip*
-    echo "v8.3.3.23+4" > ./.version
+    unzip -o "$DOWNLOADS_DIR/onlyoffice-editor-latest.zip"
+    echo "v8.3.3.23+5" > ./.version
 
     # 安装 x2t wasm 包
     # 如果目标目录已存在，则先删除以避免冲突
@@ -293,11 +282,10 @@ install_onlyoffice_editor() {
     fi
     mkdir -p "$OO_DIST/x2t"
     cd "$OO_DIST/x2t"
-    # 复制预先准备好的 x2t.zip 到当前目录
-    cp "$ONLYOFFICE_PREPARED_DIR/x2t.zip" .
-    unzip -o x2t.zip
-    rm x2t.zip*
+    unzip -o "$DOWNLOADS_DIR/x2t.zip"
     echo "v7.3+1" > ./.version
+
+    rm -rf "$ONLYOFFICE_CONF_DIR/onlyoffice-builds"
 
     echo "*************** OnlyOffice 编辑器各版本安装完成 ***************"
 }
