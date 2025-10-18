@@ -57,7 +57,7 @@ Pages.infopageFooter = function () {
 ```
 ```javascript
 // 去除导航中的关于按钮
-// customeize.dist/pages.js: Line 240
+// customeize.dist/pages.js: Line 239
 // 添加 hidden 属性
 h('a.nav-item.nav-link', { href: 'https://docs.cryptpad.org',hidden:""},
 ```
@@ -95,4 +95,10 @@ attributes: {
     'class': 'fa fa-book',
     'hidden': true,
 },
+```
+```javascript
+// 移除帮助菜单
+// wwww/common/onlyoffice/inner.js: Line   3338
+// 强制条件为 false 不执行添加帮助菜单节点代码
+if (false&&!privateData.isEmbed) {
 ```
