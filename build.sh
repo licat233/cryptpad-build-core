@@ -180,7 +180,7 @@ install_cryptpad() {
     # 清空目录，谨慎，建议保留用户数据
     # rm -rf "$SCRIPT_DIR/cryptpad/"
     # 解压并覆盖
-    unzip -o "$DOWNLOADS_DIR/cryptpad.zip"
+    unzip -q -o "$DOWNLOADS_DIR/cryptpad.zip"
     # 重命名目录
     # mv  "$SCRIPT_DIR/cryptpad-2025.6.0" "$SCRIPT_DIR/cryptpad"
     # 进入 CryptPad 目录
@@ -191,7 +191,6 @@ install_cryptpad() {
     mkdir -p data/{blob,block,data,files} customize onlyoffice-dist onlyoffice-conf
 
     print_message "success" "*************** CryptPad 安装完成 ***************"
- 
 }
 
 ## 安装 OnlyOffice 编辑器
@@ -206,107 +205,130 @@ install_onlyoffice() {
     if [ -d "$ONLYOFFICE_CONF_DIR/onlyoffice-builds" ]; then
         rm -rf "$ONLYOFFICE_CONF_DIR/onlyoffice-builds"
     fi
-    unzip -o "$DOWNLOADS_DIR/onlyoffice-builds.zip"
+    unzip -q -o "$DOWNLOADS_DIR/onlyoffice-builds.zip"
 
     # 然后对每个旧版本用对应 commit 检出到目标目录（示例列出 v1、v2b、v4、v5、v6 的命令；替换 commit 即可）：
     cd "$ONLYOFFICE_CONF_DIR/onlyoffice-builds"
 
     # v1 (commit 4f370beb)
-    # 如果目标目录已存在，则先删除以避免冲突
-    if [ -d "$OO_DIST/v1" ]; then
-        rm -rf "$OO_DIST/v1"
+    if [ ! -d "$OO_DIST/v1" ]; then
+        git worktree add -f "$OO_DIST/v1" 4f370beb
+        echo "4f370beb" > "$OO_DIST/v1/.commit"
+        # 移除版本中不需要的 help/dictionaries
+        rm -rf "$OO_DIST/v1/web-apps/apps/documenteditor/main/resources/help"
+        rm -rf "$OO_DIST/v1/web-apps/apps/presentationeditor/main/resources/help" 
+        rm -rf "$OO_DIST/v1/web-apps/apps/spreadsheeteditor/main/resources/help"
+        print_message "success" "OnlyOffice v1 版本安装完成"
+    else
+        print_message "info" "OnlyOffice v1 版本已存在，跳过安装"
     fi
-    git worktree add -f "$OO_DIST/v1" 4f370beb
-    echo "4f370beb" > "$OO_DIST/v1/.commit"
-    # 移除版本中不需要的 help/dictionaries
-    rm -rf "$OO_DIST/v1/web-apps/apps/documenteditor/main/resources/help"
-    rm -rf "$OO_DIST/v1/web-apps/apps/presentationeditor/main/resources/help" 
-    rm -rf "$OO_DIST/v1/web-apps/apps/spreadsheeteditor/main/resources/help"
 
     # v2b (commit d9da72fd)
-    # 如果目标目录已存在，则先删除以避免冲突
-    if [ -d "$OO_DIST/v2b" ]; then
-        rm -rf "$OO_DIST/v2b"
+    if [ ! -d "$OO_DIST/v2b" ]; then
+        git worktree add -f "$OO_DIST/v2b" d9da72fd
+        echo "d9da72fd" > "$OO_DIST/v2b/.commit"
+        # 移除版本中不需要的 help/dictionaries
+        rm -rf "$OO_DIST/v2b/web-apps/apps/documenteditor/main/resources/help"
+        rm -rf "$OO_DIST/v2b/web-apps/apps/presentationeditor/main/resources/help" 
+        rm -rf "$OO_DIST/v2b/web-apps/apps/spreadsheeteditor/main/resources/help"
+        print_message "success" "OnlyOffice v2b 版本安装完成"
+    else
+        print_message "info" "OnlyOffice v2b 版本已存在，跳过安装"
     fi
-    git worktree add -f "$OO_DIST/v2b" d9da72fd
-    echo "d9da72fd" > "$OO_DIST/v2b/.commit"
-    # 移除版本中不需要的 help/dictionaries
-    rm -rf "$OO_DIST/v2b/web-apps/apps/documenteditor/main/resources/help"
-    rm -rf "$OO_DIST/v2b/web-apps/apps/presentationeditor/main/resources/help" 
-    rm -rf "$OO_DIST/v2b/web-apps/apps/spreadsheeteditor/main/resources/help"
 
     # v4 (commit 6ebc6938)
-    # 如果目标目录已存在，则先删除以避免冲突
-    if [ -d "$OO_DIST/v4" ]; then
-        rm -rf "$OO_DIST/v4"
+    if [ ! -d "$OO_DIST/v4" ]; then
+        git worktree add -f "$OO_DIST/v4" 6ebc6938
+        echo "6ebc6938" > "$OO_DIST/v4/.commit"
+        # 移除版本中不需要的 help/dictionaries
+        rm -rf "$OO_DIST/v4/web-apps/apps/documenteditor/main/resources/help"
+        rm -rf "$OO_DIST/v4/web-apps/apps/presentationeditor/main/resources/help" 
+        rm -rf "$OO_DIST/v4/web-apps/apps/spreadsheeteditor/main/resources/help"
+        print_message "success" "OnlyOffice v4 版本安装完成"
+    else
+        print_message "info" "OnlyOffice v4 版本已存在，跳过安装"
     fi
-    git worktree add -f "$OO_DIST/v4" 6ebc6938
-    echo "6ebc6938" > "$OO_DIST/v4/.commit"
-    # 移除版本中不需要的 help/dictionaries
-    rm -rf "$OO_DIST/v4/web-apps/apps/documenteditor/main/resources/help"
-    rm -rf "$OO_DIST/v4/web-apps/apps/presentationeditor/main/resources/help" 
-    rm -rf "$OO_DIST/v4/web-apps/apps/spreadsheeteditor/main/resources/help"
 
     # v5 (commit 88a356f0)
-    # 如果目标目录已存在，则先删除以避免冲突
-    if [ -d "$OO_DIST/v5" ]; then
-        rm -rf "$OO_DIST/v5"
+    if [ ! -d "$OO_DIST/v5" ]; then
+        git worktree add -f "$OO_DIST/v5" 88a356f0
+        echo "88a356f0" > "$OO_DIST/v5/.commit"
+        # 移除版本中不需要的 help/dictionaries
+        rm -rf "$OO_DIST/v5/web-apps/apps/documenteditor/main/resources/help"
+        rm -rf "$OO_DIST/v5/web-apps/apps/presentationeditor/main/resources/help" 
+        rm -rf "$OO_DIST/v5/web-apps/apps/spreadsheeteditor/main/resources/help"
+        print_message "success" "OnlyOffice v5 版本安装完成"
+    else
+        print_message "info" "OnlyOffice v5 版本已存在，跳过安装"
     fi
-    git worktree add -f "$OO_DIST/v5" 88a356f0
-    echo "88a356f0" > "$OO_DIST/v5/.commit"
-    # 移除版本中不需要的 help/dictionaries
-    rm -rf "$OO_DIST/v5/web-apps/apps/documenteditor/main/resources/help"
-    rm -rf "$OO_DIST/v5/web-apps/apps/presentationeditor/main/resources/help" 
-    rm -rf "$OO_DIST/v5/web-apps/apps/spreadsheeteditor/main/resources/help"
 
     # v6 (commit abd8a309)
-    # 如果目标目录已存在，则先删除以避免冲突
-    if [ -d "$OO_DIST/v6" ]; then
-        rm -rf "$OO_DIST/v6"
+    if [ ! -d "$OO_DIST/v6" ]; then
+        git worktree add -f "$OO_DIST/v6" abd8a309
+        echo "abd8a309" > "$OO_DIST/v6/.commit"
+        # 移除版本中不需要的 help/dictionaries
+        rm -rf "$OO_DIST/v6/web-apps/apps/documenteditor/main/resources/help"
+        rm -rf "$OO_DIST/v6/web-apps/apps/presentationeditor/main/resources/help" 
+        rm -rf "$OO_DIST/v6/web-apps/apps/spreadsheeteditor/main/resources/help"
+        print_message "success" "OnlyOffice v6 版本安装完成"
+    else
+        print_message "info" "OnlyOffice v6 版本已存在，跳过安装"
     fi
-    git worktree add -f "$OO_DIST/v6" abd8a309
-    echo "abd8a309" > "$OO_DIST/v6/.commit"
-    # 移除版本中不需要的 help/dictionaries
-    rm -rf "$OO_DIST/v6/web-apps/apps/documenteditor/main/resources/help"
-    rm -rf "$OO_DIST/v6/web-apps/apps/presentationeditor/main/resources/help" 
-    rm -rf "$OO_DIST/v6/web-apps/apps/spreadsheeteditor/main/resources/help"
 
     # 安装 v7
-    # 如果目标目录已存在，则先删除以避免冲突
-    if [ -d "$OO_DIST/v7" ]; then
-        rm -rf "$OO_DIST/v7"
+    if [ ! -d "$OO_DIST/v7" ]; then
+        mkdir -p "$OO_DIST/v7"
+        cd "$OO_DIST/v7"
+        unzip -q -o "$DOWNLOADS_DIR/onlyoffice-editor-v7.zip"
+        echo "v7.3.3.60+11" > ./.version
+        # v7 移除每个版本中不需要的 help/dictionaries
+        rm -rf "$OO_DIST/v7/web-apps/apps/documenteditor/main/resources/help"
+        rm -rf "$OO_DIST/v7/web-apps/apps/presentationeditor/main/resources/help" 
+        rm -rf "$OO_DIST/v7/web-apps/apps/spreadsheeteditor/main/resources/help"
+        rm -rf "$OO_DIST/v7/web-apps/apps/common/main/resources/help/"
+        rm -rf "$OO_DIST/v7/web-apps/apps"/*/main/resources/help
+        rm -rf "$OO_DIST/v7/dictionaries" 
+        print_message "success" "OnlyOffice v7 版本安装完成"
+    else
+        print_message "info" "OnlyOffice v7 版本已存在，跳过安装"
     fi
-    mkdir -p "$OO_DIST/v7"
-    cd "$OO_DIST/v7"
-    unzip -o "$DOWNLOADS_DIR/onlyoffice-editor-v7.zip"
-    echo "v7.3.3.60+11" > ./.version
-    # v7 移除每个版本中不需要的 help/dictionaries
-    rm -rf "$OO_DIST/v7/web-apps/apps/documenteditor/main/resources/help"
-    rm -rf "$OO_DIST/v7/web-apps/apps/presentationeditor/main/resources/help" 
-    rm -rf "$OO_DIST/v7/web-apps/apps/spreadsheeteditor/main/resources/help"
-    rm -rf "$OO_DIST/v7/web-apps/apps/common/main/resources/help/"
-    rm -rf "$OO_DIST/v7/web-apps/apps"/*/main/resources/help
-    rm -rf "$OO_DIST/v7/dictionaries" 
 
     # 安装 v8
-    # 如果目标目录已存在，则先删除以避免冲突
-    if [ -d "$OO_DIST/v8" ]; then
-        rm -rf "$OO_DIST/v8"
+    if [ ! -d "$OO_DIST/v8" ]; then
+        mkdir -p "$OO_DIST/v8"
+        cd "$OO_DIST/v8"
+        unzip -q -o "$DOWNLOADS_DIR/onlyoffice-editor-latest.zip"
+        echo "v8.3.3.23+5" > ./.version
+        print_message "success" "OnlyOffice v8.3.3.23+5 版本安装完成"    
+    else
+        # 获取版本号
+        local VERSION_FILE="$OO_DIST/v8/.version"
+        if [ -f "$VERSION_FILE" ]; then
+            local VERSION_STR=$(cat "$VERSION_FILE")
+        else
+            local VERSION_STR="未知版本"
+        fi
+        print_message "info" "OnlyOffice $VERSION_STR 版本已存在，跳过安装"
     fi
-    mkdir -p "$OO_DIST/v8"
-    cd "$OO_DIST/v8"
-    unzip -o "$DOWNLOADS_DIR/onlyoffice-editor-latest.zip"
-    echo "v8.3.3.23+5" > ./.version
 
     # 安装 x2t wasm 包
     # 如果目标目录已存在，则先删除以避免冲突
-    if [ -d "$OO_DIST/x2t" ]; then
-        rm -rf "$OO_DIST/x2t"
+    if [ ! -d "$OO_DIST/x2t" ]; then
+        mkdir -p "$OO_DIST/x2t"
+        cd "$OO_DIST/x2t"
+        unzip -q -o "$DOWNLOADS_DIR/x2t.zip"
+        echo "v7.3+1" > ./.version
+        print_message "success" "OnlyOffice x2t wasm 包 v7.3+1 版本安装完成"
+    else
+        # 获取版本号
+        local VERSION_FILE="$OO_DIST/x2t/.version"
+        if [ -f "$VERSION_FILE" ]; then
+            local VERSION_STR=$(cat "$VERSION_FILE")
+        else
+            local VERSION_STR="未知版本"
+        fi
+        print_message "info" "OnlyOffice x2t wasm 包 $VERSION_STR 版本已存在，跳过安装"
     fi
-    mkdir -p "$OO_DIST/x2t"
-    cd "$OO_DIST/x2t"
-    unzip -o "$DOWNLOADS_DIR/x2t.zip"
-    echo "v7.3+1" > ./.version
 
     rm -rf "$ONLYOFFICE_CONF_DIR/onlyoffice-builds"
 
